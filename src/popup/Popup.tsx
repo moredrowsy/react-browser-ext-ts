@@ -8,53 +8,75 @@ import './Popup.css';
 class Popup extends Component {
   state = {
     data: 'Hello from Popup.js using React!',
-    tab: null as any,
-    port: null as any,
+    tab: undefined as any,
+    port: undefined as any,
   };
 
   // example to setup tab, port, and messages
   async componentDidMount() {
-    // get port connection with background.js
-    const port = await browser.runtime.connect(undefined, { name: 'popup' });
+    // Port connection with background.js
+    const port = browser.runtime.connect(undefined, { name: 'popup' });
     this.setState({ port: port });
 
-    // get active tab
+    // Get active tab
     const tabs = await browser.tabs.query({
       active: true,
       currentWindow: true,
     });
     this.setState({ tab: tabs[0] });
 
-    // send port message
+    // Send port message with tab info
     this.state.port.postMessage({
-      text: 'Popup posting port message',
+      from: 'popup',
+      to: 'background',
+      msg: 'Popup posting port message',
       tab: this.state.tab,
     });
 
-    // listen for port messages
-    this.state.port.onMessage.addListener((msg: string) => {
-      console.log('Popup listning to port message:', msg);
+    // Listen for port messages
+    this.state.port.onMessage.addListener((msg: any) => {
+      console.log('Received port message:', msg);
     });
 
-    // send message to content script
+    // One-time send
+    // From popup.js -> background.js
+    browser.runtime
+      .sendMessage({
+        from: 'popup',
+        to: 'background',
+        msg: 'Hello from Popup to Background!',
+      })
+      .then((resp) => {
+        if (resp) console.log('Received one-time response!', resp.msg);
+      })
+      .catch((e) =>
+        console.log('One-time request error to background.', e.message)
+      );
+
+    // One-time send
+    // From popup.js -> content.js
     browser.tabs
       .sendMessage(this.state.tab.id, {
         from: 'popup',
-        subject: 'DOMInfo',
+        to: 'content',
+        msg: 'Hello from Popup to Content!',
       })
-      .then((response) => {
-        console.log('Popup listening to onMessage response:', response);
+      .then((resp) => {
+        if (resp) console.log('Received one-time response!', resp.msg);
       })
       .catch((e) =>
-        console.log(`Popup send message to content script failed: ${e.message}`)
+        console.log('One-time request error to content_scripts.', e.message)
       );
 
-    // listen for one-time message
-    browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      console.log('Popup listening to onMessage:', message);
+    // One-time receive
+    // From anyone -> popup.js
+    browser.runtime.onMessage.addListener((msg, sender) => {
+      console.log(`Received one-time message from anyone/${sender.id}.`, msg);
+      return Promise.resolve({ msg: 'Popup got your request!' });
     });
 
-    // example to show how to scrape content page's html code
+    // Code injection
+    // Scrape website's html code from current tab
     const code = await this.getContentPage();
     console.log('Scraping content page from Popup componentDidMount()', code);
   }
