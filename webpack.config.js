@@ -14,70 +14,56 @@ const srcDir = 'src';
 const outDir = 'dist';
 
 // Delete or add more entries here!
-const build = {
-  entries: [
-    {
-      path: 'background/index.ts',
-      output: 'background',
-      isReact: false,
-    },
-    {
-      path: 'content_scripts/index.ts',
-      output: 'content',
-      isReact: false,
-    },
-    {
-      path: 'devtools/index.tsx',
-      output: 'devtools',
-      isReact: true,
-    },
-    {
-      path: 'options/index.tsx',
-      output: 'options',
-      isReact: true,
-    },
-    {
-      path: 'popup/index.tsx',
-      output: 'popup',
-      isReact: true,
-    },
-  ],
-  // override default options
-  dev_options: {
-    outDir: 'dist',
-    extractCss: false,
-    extractFont: false,
-    htmlMinify: false,
-    sourceMap: true,
+const entries = [
+  {
+    path: 'background/index.ts',
+    output: 'background',
+    isReact: false,
   },
-  prod_options: {
-    outDir: 'dist',
-    extractCss: true,
-    extractFont: true,
-    htmlMinify: true,
-    sourceMap: false,
+  {
+    path: 'content_scripts/index.ts',
+    output: 'content',
+    isReact: false,
   },
+  {
+    path: 'devtools/index.tsx',
+    output: 'devtools',
+    isReact: true, // React entry needs index.html
+  },
+  {
+    path: 'options/index.tsx',
+    output: 'options',
+    isReact: true, // React entry needs index.html
+  },
+  {
+    path: 'popup/index.tsx',
+    output: 'popup',
+    isReact: true, // React entry needs index.html
+  },
+];
+
+const dev_options = {
+  outDir: outDir,
+  extractCss: false,
+  extractFont: false,
+  htmlMinify: false,
+  sourceMap: true,
+};
+
+const prod_options = {
+  outDir: outDir,
+  extractCss: true,
+  extractFont: true,
+  htmlMinify: true,
+  sourceMap: false,
 };
 
 // WEBPACK CONFIG LOGIC
 module.exports = (env, argv) => {
   const isDev = argv.mode === 'development';
 
-  // default options
-  let options = {
-    srcDir: srcDir || 'src',
-    outDir: outDir || 'dist',
-    extractCss: true,
-    extractFont: true,
-    htmlMinify: true,
-    sourceMap: false,
-  };
-  let build_options = isDev ? 'dev_options' : 'prod_options';
-
-  // set options from build
-  for (const key in options)
-    if (build[build_options].hasOwnProperty(key))
-      options[key] = build[build_options][key];
+  // Options for config
+  let options = isDev ? dev_options : prod_options;
 
   // Webpack config
   let config = {
@@ -91,10 +77,18 @@ module.exports = (env, argv) => {
       assets: true,
       children: false,
       entrypoints: true,
+      // Exlude these assets reporting in watch stats
+      excludeAssets: [
+        /\.map$/, // exclude source map
+        /\.json$/, // exclude json
+        /\.(woff(2)?|eot|ttf|otf)$/, // exclude fonts
+        /\.(png|jp(e*)g|gif)$/, // exclude images
+        /\.svg$/, // exclude svg
+      ],
       modules: false,
     },
     resolve: {
-      extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      extensions: ['.ts', '.tsx', '.js', '.jsx'],
     },
     module: {
       rules: [
@@ -196,29 +190,18 @@ module.exports = (env, argv) => {
     ],
   };
 
-  // remove CleanWebpackPlugin in development
+  // Remove CleanWebpackPlugin in development to stop deleting sourcemaps
   if (isDev) config.plugins.shift();
 
-  // add entries
-  const { entries } = build;
+  // Add entries
   for (const entry of entries) {
-    // skip if entry file does not exist in path
+    // Skip if entry file does not exist in path
     if (!fs.existsSync(path.join(__dirname, srcDir, entry['path']))) continue;
 
-    config.entry[entry.output] = `./${options.srcDir}/${entry.path}`;
+    config.entry[entry.output] = `./${srcDir}/${entry.path}`;
 
     if (entry.isReact) {
-      // htlm minify options when development
-      const htmlMinifyOptions = {
-        collapseWhitespace: true,
-        removeComments: true,
-        removeRedundantAttributes: true,
-        removeScriptTypeAttributes: true,
-        removeStyleLinkTypeAttributes: true,
-        useShortDoctype: true,
-      };
-
-      // html options for plugin constructor
+      // Html options for HtmlWebpackPlugin to inject bundled js into html page
       let file = path.parse(entry.path);
       let htmlOptions = {
         inject: true,
@@ -227,8 +210,18 @@ module.exports = (env, argv) => {
         filename: `${entry.output}.html`,
       };
 
-      // add minify options to html options when development
-      if (options.htmlMinify) htmlOptions['minify'] = htmlMinifyOptions;
+      // Minify html when in production
+      if (options.htmlMinify) {
+        const htmlMinifyOptions = {
+          collapseWhitespace: true,
+          removeComments: true,
+          removeRedundantAttributes: true,
+          removeScriptTypeAttributes: true,
+          removeStyleLinkTypeAttributes: true,
+          useShortDoctype: true,
+        };
+        htmlOptions['minify'] = htmlMinifyOptions;
+      }
 
       config.plugins.push(new HtmlWebpackPlugin(htmlOptions));
     }
