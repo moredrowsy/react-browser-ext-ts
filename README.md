@@ -1,4 +1,4 @@
-# React Extension Starter with Typescript
+# React Browser Extension Starter with Typescript
 
 ## Minimal react frontend for browser (Chrome/Firefox) extension with basic cross-browser API and essential webpack setup
 

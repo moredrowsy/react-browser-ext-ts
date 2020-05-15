@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "React Browser Extension Boilerplate",
+  "name": "React Browser Extension Starter",
   "version": "1.0",
-  "description": "Boilerplate for minimal/clean react front end",
+  "description": "Template for browser extension using react",
   "author": "",
   "icons": {
     "16": "assets/icons/icon16.png",
@@ -11,35 +11,29 @@
     "128": "assets/icons/icon128.png"
   },
   "background": {
-    "scripts": [
-      "background.js"
-    ],
+    "scripts": ["background.js"],
     "persistent": false
   },
-  "content_scripts": [{
-    "matches": [
-      "<all_urls>"
-    ],
-    "exclude_matches": [],
-    "run_at": "document_idle",
-    "all_frames": false,
-    "css": [],
-    "js": [
-      "content.js"
-    ],
-    "match_about_blank": false
-  }],
+  "content_scripts": [
+    {
+      "all_frames": false,
+      "css": [],
+      "js": ["content.js"],
+      "matches": ["<all_urls>"],
+      "match_about_blank": false,
+      "run_at": "document_idle"
+    }
+  ],
   "devtools_page": "devtools.html",
   "browser_action": {
-    "default_icons": {
+    "default_icon": {
       "16": "assets/icons/icon16.png",
       "32": "assets/icons/icon32.png",
       "48": "assets/icons/icon48.png",
       "128": "assets/icons/icon128.png"
     },
-    "default_title": "React Boilerplate Popup",
-    "default_icon": "assets/icons/icon32.png",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "React Browser Extension Popup"
   },
   "options_ui": {
     "page": "options.html",
