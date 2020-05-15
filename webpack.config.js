@@ -75,11 +75,9 @@ module.exports = (env, argv) => {
   let build_options = isDev ? 'dev_options' : 'prod_options';
 
   // set options from build
-  const keys = Object.keys(options);
-  keys.forEach((key) => {
+  for (const key in options)
     if (build[build_options].hasOwnProperty(key))
       options[key] = build[build_options][key];
-  });
 
   // Webpack config
   let config = {
@@ -203,9 +201,9 @@ module.exports = (env, argv) => {
 
   // add entries
   const { entries } = build;
-  entries.forEach((entry) => {
+  for (const entry of entries) {
     // skip if entry file does not exist in path
-    if (!fs.existsSync(path.join(__dirname, srcDir, entry['path']))) return;
+    if (!fs.existsSync(path.join(__dirname, srcDir, entry['path']))) continue;
 
     config.entry[entry.output] = `./${options.srcDir}/${entry.path}`;
 
@@ -234,7 +232,7 @@ module.exports = (env, argv) => {
 
       config.plugins.push(new HtmlWebpackPlugin(htmlOptions));
     }
-  });
+  }
 
   return config;
 };

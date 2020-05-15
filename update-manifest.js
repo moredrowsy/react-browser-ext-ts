@@ -11,26 +11,15 @@ let manifest = JSON.parse(data);
 let isManifestChanged = false;
 
 // modify manifest if entries are not found
-entries.forEach((entry) => {
-  // delete manifest key if entry does not exist
+for (const entry of entries)
   if (!fs.existsSync(path.join(__dirname, outDir, entry + '.js'))) {
-    // remove 'background from manifest.json
-    if (entry.includes('background')) {
-      delete manifest['background'];
-    } else if (entry.includes('content')) {
-      delete manifest['content_scripts'];
-    } else if (entry.includes('devtools')) {
-      delete manifest['devtools_page'];
-    } else if (entry.includes('options')) {
-      delete manifest['options_ui'];
-    } else if (entry.includes('popup')) {
-      delete manifest['browser_action'];
-    }
+    if (entry.includes('background')) delete manifest['background'];
+    else if (entry.includes('content')) delete manifest['content_scripts'];
+    else if (entry.includes('devtools')) delete manifest['devtools_page'];
+    else if (entry.includes('options')) delete manifest['options_ui'];
+    else if (entry.includes('popup')) delete manifest['browser_action'];
     isManifestChanged = true;
-
-    return;
   }
-});
 
 // overwrite manifest.json
 if (isManifestChanged)
