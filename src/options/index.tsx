@@ -4,4 +4,9 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import Options from './Options';
 
-ReactDOM.render(<Options />, document.getElementById('root'));
+ReactDOM.render(
+  <React.StrictMode>
+    <Options />
+  </React.StrictMode>,
+  document.getElementById('root')
+);

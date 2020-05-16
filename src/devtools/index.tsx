@@ -4,4 +4,9 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import DevTools from './DevTools';
 
-ReactDOM.render(<DevTools />, document.getElementById('root'));
+ReactDOM.render(
+  <React.StrictMode>
+    <DevTools />
+  </React.StrictMode>,
+  document.getElementById('root')
+);
