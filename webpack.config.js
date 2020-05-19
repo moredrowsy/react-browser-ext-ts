@@ -187,6 +187,13 @@ module.exports = (env, argv) => {
         filename: 'assets/css/[name].css',
         chunkFilename: 'assets/css/[id].css',
       }),
+      {
+        apply: (compiler) => {
+          compiler.hooks.afterEmit.tap('AfterEmitPlugin', (compilation) => {
+            updateManifest(entries, options.outDir);
+          });
+        },
+      },
     ],
   };
 
@@ -229,3 +236,33 @@ module.exports = (env, argv) => {
 
   return config;
 };
+
+// Remove manifest keys if certain entries do no exist
+// Ie, if not 'devtools' entry is missing, remove devtool key in manifest
+function updateManifest(entries, outDir) {
+  // read manifest.json
+  const manifestPath = path.join(__dirname, outDir, 'manifest.json');
+  const data = fs.readFileSync(manifestPath, { encoding: 'utf-8', flag: 'r' });
+  let manifest = JSON.parse(data);
+  let isManifestChanged = false;
+
+  // modify manifest if entries are not found
+  for (const entry of entries) {
+    const output = entry.output;
+    if (!fs.existsSync(path.join(__dirname, outDir, output + '.js'))) {
+      if (output.includes('background')) delete manifest['background'];
+      else if (output.includes('content')) delete manifest['content_scripts'];
+      else if (output.includes('devtools')) delete manifest['devtools_page'];
+      else if (output.includes('options')) delete manifest['options_ui'];
+      else if (output.includes('popup')) delete manifest['browser_action'];
+      isManifestChanged = true;
+    }
+  }
+
+  // overwrite manifest.json
+  if (isManifestChanged)
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), {
+      encoding: 'utf-8',
+      flag: 'w',
+    });
+}

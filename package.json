@@ -5,8 +5,8 @@
   "repository": "https://github.com/moredrowsy/react-browser-ext-ts",
   "main": "dist/background/background.js",
   "scripts": {
-    "build": "webpack --mode production && node update-manifest",
-    "build-dev": "webpack --mode development --watch && node update-manifest"
+    "build": "webpack --mode production",
+    "build-dev": "webpack --mode development --watch"
   },
   "keywords": [
     "boilerplate",
